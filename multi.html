@@ -1,0 +1,720 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Batch Image Processor | Parallel Multi-Image Processing</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      background: #eef2f7;
+      margin: 0;
+      padding: 24px 20px;
+    }
+
+    .app-container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* header */
+    .header {
+      background: white;
+      border-radius: 2rem;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.9rem;
+      background: linear-gradient(135deg, #1a4d5f, #2c7a4d);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .sub {
+      color: #2c6979;
+      margin-bottom: 1.2rem;
+      border-left: 3px solid #2c9b6e;
+      padding-left: 1rem;
+    }
+
+    .upload-zone {
+      background: #f8fafd;
+      border: 2px dashed #bdd4e2;
+      border-radius: 1.5rem;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .file-input-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #2c7a4d;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      border-radius: 40px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .btn-outline {
+      background: white;
+      color: #2c7a4d;
+      border: 1px solid #2c7a4d;
+    }
+
+    .btn-outline:hover {
+      background: #e9f3ef;
+    }
+
+    .btn-danger {
+      background: #b1624b;
+    }
+
+    .btn-danger:hover {
+      background: #8e4230;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 1rem;
+      font-size: 0.75rem;
+    }
+
+    .stats-badge {
+      background: #e2eaf1;
+      border-radius: 40px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1f5e6e;
+    }
+
+    /* gallery grid */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.8rem;
+      margin-top: 1.5rem;
+    }
+
+    .image-card {
+      background: white;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .image-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+    }
+
+    .card-header {
+      padding: 0.9rem 1rem;
+      background: #ffffff;
+      border-bottom: 1px solid #eef2f8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #1e4a5f;
+      background: #eef2fa;
+      padding: 0.2rem 0.7rem;
+      border-radius: 30px;
+      font-family: monospace;
+      word-break: break-all;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .canvas-pair {
+      display: flex;
+      flex-direction: column;
+      background: #f5f7fb;
+      padding: 1rem;
+      gap: 0.8rem;
+    }
+
+    .img-container {
+      background: #1e2a2e;
+      border-radius: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      display: block;
+      background: #19282c;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .canvas-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #2c6979;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .filter-bar {
+      padding: 0.8rem 1rem;
+      background: #f9fbfe;
+      border-top: 1px solid #e9edf2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .progress-indicator {
+      margin-top: 6px;
+      height: 4px;
+      background: #e0e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: #2c9b6e;
+      transition: width 0.1s linear;
+    }
+
+    .status-msg {
+      font-size: 0.7rem;
+      font-family: monospace;
+      color: #2c7a4d;
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      background: white;
+      border-radius: 2rem;
+      color: #6b8b9b;
+    }
+
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #6f8f9f;
+    }
+
+    @media (max-width: 680px) {
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+      .upload-zone {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="header">
+    <h1>🖼️ Batch Parallel Processor</h1>
+    <div class="sub">Multiple images • Web Workers • Grayscale / Sepia / Invert • Real-time per image</div>
+    <div class="upload-zone">
+      <div class="file-input-group">
+        <button class="btn" id="multiUploadBtn">📂 Select Images (multiple)</button>
+        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/jpg,image/webp" style="display: none">
+        <button class="btn btn-outline" id="clearAllBtn">🗑️ Clear All</button>
+      </div>
+      <div class="stats-badge" id="globalStats">📸 0 images loaded</div>
+    </div>
+  </div>
+
+  <div id="galleryContainer" class="gallery">
+    <!-- dynamic image cards appear here -->
+    <div class="empty-state">✨ No images yet. Click "Select Images" to upload multiple files.<br>Each image will be processed in parallel using Web Workers.</div>
+  </div>
+  <footer>
+    ⚡ Each image processes independently with its own worker pool (4 workers per image).<br>
+    🧠 Filters run in true parallel threads — no UI blocking. Click any filter per image!
+  </footer>
+</div>
+
+<script>
+  (function() {
+    // ----- configuration -----
+    const MAX_WORKERS_PER_IMAGE = 4;      // each image gets up to 4 workers (based on hardware)
+    const DEFAULT_WORKERS = Math.min(navigator.hardwareConcurrency || 4, MAX_WORKERS_PER_IMAGE);
+    
+    // DOM elements
+    const fileInput = document.getElementById('fileInput');
+    const multiUploadBtn = document.getElementById('multiUploadBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const galleryContainer = document.getElementById('galleryContainer');
+    const globalStatsSpan = document.getElementById('globalStats');
+    
+    // Store image item objects: each holds DOM elements, imageData, canvas refs, workers state
+    let imageItems = [];      // array of objects
+    
+    // ---------- Helper: Worker script (same as before but optimized, filter types: grayscale, sepia, invert)
+    function createWorkerBlob() {
+      // universal worker that receives tile + filter type
+      return new Blob([`
+        self.onmessage = function(e) {
+          const { width, height, tileYStart, tileHeight, imageDataChunk, filter } = e.data;
+          const data = new Uint8ClampedArray(imageDataChunk);
+          const pixelCount = data.length / 4;
+          
+          if (filter === 'grayscale') {
+            for (let i = 0; i < pixelCount; i++) {
+              const r = data[i*4];
+              const g = data[i*4+1];
+              const b = data[i*4+2];
+              const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+              data[i*4] = gray;
+              data[i*4+1] = gray;
+              data[i*4+2] = gray;
+            }
+          } 
+          else if (filter === 'sepia') {
+            for (let i = 0; i < pixelCount; i++) {
+              let r = data[i*4];
+              let g = data[i*4+1];
+              let b = data[i*4+2];
+              let tr = (0.393 * r + 0.769 * g + 0.189 * b);
+              let tg = (0.349 * r + 0.686 * g + 0.168 * b);
+              let tb = (0.272 * r + 0.534 * g + 0.131 * b);
+              data[i*4] = Math.min(255, tr);
+              data[i*4+1] = Math.min(255, tg);
+              data[i*4+2] = Math.min(255, tb);
+            }
+          }
+          else if (filter === 'invert') {
+            for (let i = 0; i < pixelCount; i++) {
+              data[i*4] = 255 - data[i*4];
+              data[i*4+1] = 255 - data[i*4+1];
+              data[i*4+2] = 255 - data[i*4+2];
+            }
+          }
+          
+          self.postMessage({
+            tileYStart: tileYStart,
+            tileHeight: tileHeight,
+            processedChunk: data.buffer
+          }, [data.buffer]);
+        };
+      `], { type: 'application/javascript' });
+    }
+    
+    const workerBlobUrl = URL.createObjectURL(createWorkerBlob());
+    
+    // core parallel processing for a single imageData + filter, returns promise<ImageData>
+    async function processImageParallel(imageData, width, height, filterType, onProgress) {
+      const srcData = imageData.data; // Uint8ClampedArray
+      // split into strips (based on worker count)
+      const workerCount = DEFAULT_WORKERS;
+      let tiles = [];
+      let remainingRows = height;
+      let startY = 0;
+      const baseTileH = Math.floor(height / workerCount);
+      for (let i = 0; i < workerCount; i++) {
+        let tileH = baseTileH;
+        if (i === workerCount - 1) tileH = remainingRows;
+        if (tileH <= 0) break;
+        tiles.push({ startY, tileH });
+        startY += tileH;
+        remainingRows -= tileH;
+      }
+      const totalTiles = tiles.length;
+      let completed = 0;
+      
+      const results = await new Promise((resolve, reject) => {
+        const resultArray = new Array(totalTiles);
+        let finished = 0;
+        
+        for (let idx = 0; idx < totalTiles; idx++) {
+          const { startY: yStart, tileH: tHeight } = tiles[idx];
+          const bytesPerRow = width * 4;
+          const startOffset = yStart * bytesPerRow;
+          const chunkLength = tHeight * bytesPerRow;
+          const chunkData = new Uint8ClampedArray(srcData.buffer.slice(startOffset, startOffset + chunkLength));
+          
+          const worker = new Worker(workerBlobUrl);
+          worker.onmessage = (e) => {
+            const { tileYStart, tileHeight, processedChunk } = e.data;
+            const processedArray = new Uint8ClampedArray(processedChunk);
+            resultArray[idx] = { yStart: tileYStart, height: tileHeight, data: processedArray };
+            completed++;
+            if (onProgress) onProgress(Math.floor((completed / totalTiles) * 100));
+            finished++;
+            if (finished === totalTiles) resolve(resultArray);
+            worker.terminate();
+          };
+          worker.onerror = (err) => {
+            reject(err);
+            worker.terminate();
+          };
+          worker.postMessage({
+            width, height,
+            tileYStart: yStart,
+            tileHeight: tHeight,
+            imageDataChunk: chunkData,
+            filter: filterType
+          }, [chunkData.buffer]);
+        }
+      });
+      
+      // rebuild full ImageData
+      const newImageData = new ImageData(width, height);
+      const newData = newImageData.data;
+      for (const res of results) {
+        if (!res) continue;
+        const { yStart, height: tileH, data: tileData } = res;
+        const bytesPerRow = width * 4;
+        const destOffset = yStart * bytesPerRow;
+        newData.set(tileData, destOffset);
+      }
+      return newImageData;
+    }
+    
+    // ----- Image Item Class (manages one card) -----
+    class ImageCard {
+      constructor(id, file, originalImageBitmap, width, height) {
+        this.id = id;
+        this.fileName = file.name;
+        this.width = width;
+        this.height = height;
+        this.originalImageData = null;     // store original ImageData
+        this.currentFilter = 'original';
+        this.isProcessing = false;
+        
+        // Create DOM elements
+        this.cardDiv = document.createElement('div');
+        this.cardDiv.className = 'image-card';
+        
+        // header
+        const header = document.createElement('div');
+        header.className = 'card-header';
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'card-title';
+        titleSpan.title = file.name;
+        titleSpan.textContent = file.name.length > 28 ? file.name.slice(0, 25) + '...' : file.name;
+        const actionDiv = document.createElement('div');
+        actionDiv.className = 'card-actions';
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '✖';
+        removeBtn.className = 'btn btn-sm btn-danger';
+        removeBtn.style.background = '#b1624b';
+        removeBtn.style.padding = '0.25rem 0.7rem';
+        actionDiv.appendChild(removeBtn);
+        header.appendChild(titleSpan);
+        header.appendChild(actionDiv);
+        
+        // canvas pair area
+        const canvasPair = document.createElement('div');
+        canvasPair.className = 'canvas-pair';
+        
+        // original canvas container
+        const origDiv = document.createElement('div');
+        origDiv.innerHTML = '<div class="canvas-label">📷 Original</div>';
+        const origCanvas = document.createElement('canvas');
+        origCanvas.width = width;
+        origCanvas.height = height;
+        origCanvas.style.maxWidth = '100%';
+        origCanvas.style.height = 'auto';
+        origDiv.appendChild(origCanvas);
+        
+        // processed canvas container
+        const procDiv = document.createElement('div');
+        procDiv.innerHTML = '<div class="canvas-label">✨ Processed (parallel)</div>';
+        const procCanvas = document.createElement('canvas');
+        procCanvas.width = width;
+        procCanvas.height = height;
+        procCanvas.style.maxWidth = '100%';
+        procCanvas.style.height = 'auto';
+        procDiv.appendChild(procCanvas);
+        
+        canvasPair.appendChild(origDiv);
+        canvasPair.appendChild(procDiv);
+        
+        // progress bar area
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'progress-indicator';
+        const progressFill = document.createElement('div');
+        progressFill.className = 'progress-fill';
+        progressContainer.appendChild(progressFill);
+        const statusSpan = document.createElement('div');
+        statusSpan.className = 'status-msg';
+        statusSpan.textContent = 'Ready';
+        
+        // filter buttons
+        const filterBar = document.createElement('div');
+        filterBar.className = 'filter-bar';
+        const grayBtn = this._createFilterBtn('🌫️ Grayscale', 'grayscale');
+        const sepiaBtn = this._createFilterBtn('🟫 Sepia', 'sepia');
+        const invertBtn = this._createFilterBtn('🎨 Invert', 'invert');
+        const resetBtn = this._createFilterBtn('⟳ Reset', 'original');
+        resetBtn.style.background = '#5f7f8c';
+        filterBar.appendChild(grayBtn);
+        filterBar.appendChild(sepiaBtn);
+        filterBar.appendChild(invertBtn);
+        filterBar.appendChild(resetBtn);
+        
+        this.cardDiv.appendChild(header);
+        this.cardDiv.appendChild(canvasPair);
+        this.cardDiv.appendChild(progressContainer);
+        this.cardDiv.appendChild(statusSpan);
+        this.cardDiv.appendChild(filterBar);
+        
+        // store references
+        this.origCanvas = origCanvas;
+        this.procCanvas = procCanvas;
+        this.origCtx = origCanvas.getContext('2d');
+        this.procCtx = procCanvas.getContext('2d');
+        this.progressFill = progressFill;
+        this.statusSpan = statusSpan;
+        
+        // draw original bitmap into canvas and extract ImageData
+        this.origCtx.drawImage(originalImageBitmap, 0, 0, width, height);
+        this.originalImageData = this.origCtx.getImageData(0, 0, width, height);
+        // copy to processed canvas
+        this.procCtx.putImageData(this.originalImageData, 0, 0);
+        
+        // event: remove button
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.destroy();
+        });
+        
+        // store filter buttons mapping
+        this.filterBtns = { grayBtn, sepiaBtn, invertBtn, resetBtn };
+      }
+      
+      _createFilterBtn(label, filterType) {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.className = 'btn btn-sm';
+        btn.style.background = '#3a7b6e';
+        btn.style.padding = '0.35rem 1rem';
+        btn.addEventListener('click', async () => {
+          if (this.isProcessing) {
+            this.statusSpan.textContent = '⏳ Processing in progress, please wait...';
+            return;
+          }
+          if (filterType === 'original') {
+            this.procCtx.putImageData(this.originalImageData, 0, 0);
+            this.currentFilter = 'original';
+            this.statusSpan.textContent = 'Reset to original';
+            this.progressFill.style.width = '0%';
+            setTimeout(() => { if(this.statusSpan.textContent === 'Reset to original') this.statusSpan.textContent = 'Ready'; }, 1200);
+            return;
+          }
+          await this.applyFilter(filterType);
+        });
+        return btn;
+      }
+      
+      async applyFilter(filterType) {
+        this.isProcessing = true;
+        this.statusSpan.textContent = `⚡ Processing ${filterType} with ${DEFAULT_WORKERS} workers...`;
+        this.progressFill.style.width = '0%';
+        const startTime = performance.now();
+        try {
+          const processedImageData = await processImageParallel(
+            this.originalImageData, this.width, this.height, filterType,
+            (percent) => {
+              this.progressFill.style.width = `${percent}%`;
+              if (percent === 100) this.statusSpan.textContent = `✔️ ${filterType} done!`;
+              else this.statusSpan.textContent = `🔄 ${filterType} ${percent}%`;
+            }
+          );
+          this.procCtx.putImageData(processedImageData, 0, 0);
+          const elapsed = (performance.now() - startTime).toFixed(1);
+          this.statusSpan.textContent = `✅ ${filterType} applied (${elapsed}ms)`;
+          this.currentFilter = filterType;
+          setTimeout(() => {
+            if (this.statusSpan.textContent.includes(`${filterType} applied`)) 
+              this.statusSpan.textContent = 'Ready';
+            this.progressFill.style.width = '0%';
+          }, 1500);
+        } catch (err) {
+          console.error(err);
+          this.statusSpan.textContent = `❌ Error processing ${filterType}`;
+        } finally {
+          this.isProcessing = false;
+        }
+      }
+      
+      destroy() {
+        if (this.cardDiv && this.cardDiv.parentNode) {
+          this.cardDiv.remove();
+        }
+        const index = imageItems.findIndex(item => item.id === this.id);
+        if (index !== -1) imageItems.splice(index, 1);
+        updateGlobalStats();
+      }
+      
+      getElement() {
+        return this.cardDiv;
+      }
+    }
+    
+    // ----- global helpers -----
+    let nextId = 1;
+    
+    function updateGlobalStats() {
+      const count = imageItems.length;
+      globalStatsSpan.innerHTML = `📸 ${count} image${count !== 1 ? 's' : ''} loaded`;
+      if (count === 0) {
+        if (galleryContainer.querySelector('.empty-state')) return;
+        if (!document.querySelector('.empty-state-manual')) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'empty-state';
+          emptyDiv.innerHTML = '✨ No images yet. Click "Select Images" to upload multiple files.<br>Each image will be processed in parallel using Web Workers.';
+          emptyDiv.style.gridColumn = '1 / -1';
+          emptyDiv.id = 'globalEmptyMsg';
+          galleryContainer.appendChild(emptyDiv);
+        }
+      } else {
+        const emptyEl = document.getElementById('globalEmptyMsg');
+        if (emptyEl) emptyEl.remove();
+      }
+    }
+    
+    async function addImageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 500;
+          if (width > maxDim || height > maxDim) {
+            const ratio = Math.min(maxDim / width, maxDim / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+          }
+          // create offscreen bitmap
+          const offCanvas = document.createElement('canvas');
+          offCanvas.width = width;
+          offCanvas.height = height;
+          const offCtx = offCanvas.getContext('2d');
+          offCtx.drawImage(img, 0, 0, width, height);
+          // create bitmap for original
+          createImageBitmap(offCanvas).then(bitmap => {
+            const card = new ImageCard(nextId++, file, bitmap, width, height);
+            imageItems.push(card);
+            galleryContainer.appendChild(card.getElement());
+            updateGlobalStats();
+            URL.revokeObjectURL(url);
+            resolve();
+          }).catch(reject);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error(`Failed to load ${file.name}`));
+        };
+        img.src = url;
+      });
+    }
+    
+    async function handleFiles(files) {
+      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (imageFiles.length === 0) {
+        alert('Please select valid image files (jpg, png, webp).');
+        return;
+      }
+      // remove empty state if present
+      const emptyMsg = document.getElementById('globalEmptyMsg');
+      if (emptyMsg) emptyMsg.remove();
+      
+      // process each image concurrently (parallel loading but sequential addition for UI smoothness)
+      for (const file of imageFiles) {
+        try {
+          await addImageFromFile(file);
+        } catch (err) {
+          console.warn(err);
+          alert(`Could not load ${file.name}: ${err.message}`);
+        }
+      }
+    }
+    
+    function clearAllImages() {
+      for (let i = imageItems.length-1; i >= 0; i--) {
+        imageItems[i].destroy();
+      }
+      imageItems = [];
+      updateGlobalStats();
+      // re-add empty state if needed
+      if (imageItems.length === 0 && !document.getElementById('globalEmptyMsg')) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'empty-state';
+        emptyDiv.id = 'globalEmptyMsg';
+        emptyDiv.innerHTML = '✨ No images yet. Click "Select Images" to upload multiple files.<br>Each image will be processed in parallel using Web Workers.';
+        emptyDiv.style.gridColumn = '1 / -1';
+        galleryContainer.appendChild(emptyDiv);
+      }
+    }
+    
+    // ----- event listeners -----
+    multiUploadBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length) {
+        handleFiles(e.target.files);
+      }
+      fileInput.value = '';
+    });
+    clearAllBtn.addEventListener('click', clearAllImages);
+    
+    // initial cleanup
+    updateGlobalStats();
+  })();
+</script>
+</body>
+</html>
